@@ -14,4 +14,7 @@ dia = pd.read_csv("/Users/atindewan/Desktop/Atin/Purdue/NUR 39900/mimic-iv-ed-2.
 print(dia.head())
 
 
+"I like making changes, so that's what I'm going to do"
+
 # alec wuz here
+
