@@ -3,13 +3,13 @@ from data_test import get_stay_length
 
 testnum = 0;
 
-def unittest(condition):
+def unittest(condition, name=testnum):
     global testnum;
     testnum += 1;
     if (condition):
-        print(f"test {testnum} passed");
+        print(f"test {name} passed");
     else:
-        print(f"test {testnum} failed");
+        print(f"test {name} failed");
         
         
 

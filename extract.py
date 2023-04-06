@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 
-vit = pd.read_csv("mimic-iv-ed/2.2/ed/vitalsign.csv")
-edstays = pd.read_csv("mimic-iv-ed/2.2/ed/edstays.csv")
+vit = pd.read_csv("mimic-iv-ed/2.2/ed/vitalsign.csv",low_memory=False)
+edstays = pd.read_csv("mimic-iv-ed/2.2/ed/edstays.csv",low_memory=False)
 
 def get_heartrate(vit, stay_id):
     hr = vit.loc[vit['stay_id'] == stay_id]['heartrate'];

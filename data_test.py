@@ -3,7 +3,8 @@ import numpy as np
 
 from extract import *
 
-ENTRIES_PER_DATAPOINT = 10; # the number vitalsign datapoints for each stay_id we will send to the neural net
+ENTRIES_PER_DATAPOINT = 20; # the number vitalsign datapoints for each stay_id we will send to the neural net
+STAY_IDS_TO_OBTAIN = 1; # the number of stayids we will grab from the dataset
 
 CA_data = pd.read_csv("mimic-iv-ed/2.2/ed/diagnosis.csv")
 def had_cardiac_arrest(stay_id, data=CA_data):
@@ -27,10 +28,10 @@ def get_stay_length(stay_id, data = CA_data):
     return len(one_person_data);
 
 def load_data():
-    dia = pd.read_csv("mimic-iv-ed/2.2/ed/diagnosis.csv")
+    dia = pd.read_csv("mimic-iv-ed/2.2/ed/vitalsign.csv",low_memory=False);
     
 
-    print(dia.head)
+    print(dia.head())
 
     # for stay_id in dia['stay_ids']:
     #     data_all = [stay_id, get_gender(edstays, stay_id), 
@@ -43,11 +44,24 @@ def load_data():
     # return the data frame
     return dia;
 
-def remove_excess_columns(data):
+def remove_excess_columns(df):
+    
+    print("removing excess columns \n")
     # remove columns we don't want
     global ENTRIES_PER_DATAPOINT
 
-    new_data = data.drop([data['stay_id'].value_counts() < ENTRIES_PER_DATAPOINT].index, inplace = True)
+    # new_data = data.drop([data['stay_id'].value_counts() < ENTRIES_PER_DATAPOINT].index, inplace = True)
+    
+    df = df.drop('subject_id', axis=1)
+    df = df.drop('charttime', axis=1)
+    # df = df.drop('resprate', axis=1)
+    df = df.drop('rhythm', axis=1)
+    df = df.drop('pain', axis=1)
+    
+    df = df.drop('temperature', axis=1);
+    df = df.drop('gender', axis=1)
+    
+    print(df.head());
     '''
     ct = 1
 
@@ -74,22 +88,52 @@ def remove_excess_columns(data):
         # df is the dataframe
         #if (ct != 7)
         #data.drop([data['stay_id'] ].index, inplace = True)
-    return new_data;
+    return df;
 
 def fix_race(edstaysdata): # gloria
     # change race to a consistent labeling system
-    return data;
+    return edstaysdata;
 
-def split_by_stay_id(data=CA_data):
+def split_by_stay_id(df):
     # split the data into a list of dataframes for each stay_id
     # [ stayid1 <dataframe> , stayid2 <dataframe> ]
-    stay_id = data['stay_id']
-    dict_person = {}
-    for id in stay_id:
-        person = data[data["stay_id"] == id]
-        dict_person[stay_id].append(person)
+    # stay_id = data['stay_id']
+    # dict_person = {}
+    # for id in stay_id:
+    #     person = data[data["stay_id"] == id]
+    #     dict_person[stay_id].append(person)
+    
+    
+    
+    alreadyDone = [];
+    stayids = [];
+    
+    
+    for index, row in df.iterrows():
+        if (row['stay_id'] in alreadyDone): 
+            continue;
+        if (len(stayids) >= STAY_IDS_TO_OBTAIN ): 
+            break
+        alreadyDone.append(row['stay_id']);
+        
+        stayid_specific_df = df.loc[df.stay_id==alreadyDone[-1]];
+        if (ENTRIES_PER_DATAPOINT == -1 or stayid_specific_df.shape[0] > ENTRIES_PER_DATAPOINT):
+            stayids.append(stayid_specific_df);
+    
+    num_to_print=10;
+    print('stay_ids:');
+    print(f'len(stay_ids) = {len(stayids)}')
+    for i in range(0, num_to_print):
+        if (i >= len(stayids)): break;
+        stay_id = stayids[i];
+        try:
+            print(stay_id);
+        
+        except Exception:
+            pass;
 
-    return dict_person
+    save_list_of_dataframes(stayids)
+    return stayids
 
 def add_labels_to_data(data):
     # check whether stay_id is long enough, must have ENTRIES_PER_DATAPOINT values, use last if more
@@ -101,9 +145,21 @@ def data_to_numpy_array(data):
     # format everything into a single numpy array
     return data;
 
-def save_data_to_file(data_to_save):
+def save_list_of_dataframes(dataframes):
     # save the array to a file to ship to neural net
+
+    print("saving dataframe");
+    
+    for i, df in enumerate(dataframes):
+        print(df)
+        stay_id = df['stay_id'].iloc[0];
+        df.to_hdf('data.h5', f'stayid_{stay_id}', mode='a')
+
+    print('data saved')
+        
+def save_data_to_file(data_to_save):
     np.savetxt("data.csv", data_to_save, delimiter = ', ');
+    
 
 if __name__ == "__main__":
     # load in the data and print the first few rows
