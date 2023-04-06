@@ -18,3 +18,17 @@ print(dia.head())
 
 # alec wuz here
 
+list = [
+    (1,2,3,4,5),
+    (5,6,7,8,9,),
+]
+
+print(list[0]);
+
+
+dict = {
+    123412: (1,2,3,4,5),
+    "numair": (5,6,7,8,9,),
+}
+
+print(dict[123412])
