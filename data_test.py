@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
-
+import math 
 from extract import *
 
 ENTRIES_PER_DATAPOINT = 20; # the number vitalsign datapoints for each stay_id we will send to the neural net
-STAY_IDS_TO_OBTAIN = 1; # the number of stayids we will grab from the dataset
+STAY_IDS_TO_OBTAIN = 1000; # the number of stayids we will grab from the dataset
 
 CA_data = pd.read_csv("mimic-iv-ed/2.2/ed/diagnosis.csv")
 def had_cardiac_arrest(stay_id, data=CA_data):
@@ -118,33 +118,41 @@ def split_by_stay_id(df):
         
         stayid_specific_df = df.loc[df.stay_id==alreadyDone[-1]];
         if (ENTRIES_PER_DATAPOINT == -1 or stayid_specific_df.shape[0] > ENTRIES_PER_DATAPOINT):
-            stayids.append(stayid_specific_df);
+            stayids.append(stayid_specific_df.tail(ENTRIES_PER_DATAPOINT));
     
-    num_to_print=10;
-    print('stay_ids:');
-    print(f'len(stay_ids) = {len(stayids)}')
-    for i in range(0, num_to_print):
-        if (i >= len(stayids)): break;
-        stay_id = stayids[i];
-        try:
-            print(stay_id);
-        
-        except Exception:
-            pass;
+    
 
-    save_list_of_dataframes(stayids)
+    # save_list_of_dataframes(stayids)
     return stayids
 
-def add_labels_to_data(data):
-    # check whether stay_id is long enough, must have ENTRIES_PER_DATAPOINT values, use last if more
+def get_labels_from_data(data):
     # lookup whether that stay_id had a cardiac arrest
     # call had_cardiac_arrest here with each datapoint to determine the label
-    return data;
+    # also drops stay_id from the data
+    
+    labels = np.zeros(len(data)); # create an empty array for the labels
+    
+    for i, df in enumerate(data):
+        print(f"stay_id: {df['stay_id'].values[0]}")
+        labels[i] = int(had_cardiac_arrest(df['stay_id'].values[0]));
+        df.drop("stay_id", axis=1); # once we get the labels we can drop stay_id from the data
+    return labels;
 
 def data_to_numpy_array(data):
-    # format everything into a single numpy array
-    return data;
+    output = np.empty((len(data), data[0].shape[0], data[0].shape[1]))
 
+    for i, df in enumerate(data):
+        print(df);
+        output[i] = df.to_numpy()
+    return output;
+
+def remove_nan(data_list):
+    # math.isnan(data)
+    for df in data_list:
+        #df.dropna(axis='index', how='any')
+        df.fillna(0)
+    return data_list
+                    
 def save_list_of_dataframes(dataframes):
     # save the array to a file to ship to neural net
 
@@ -157,10 +165,10 @@ def save_list_of_dataframes(dataframes):
 
     print('data saved')
         
-def save_data_to_file(data_to_save):
-    np.savetxt("data.csv", data_to_save, delimiter = ', ');
-    
-
+# save the array to a file to ship to neural net
+def save_data_to_file(data_array, filename="data.csv"):
+    np.save(filename, data_array)
+ 
 if __name__ == "__main__":
     # load in the data and print the first few rows
     data = load_data();
@@ -177,12 +185,15 @@ if __name__ == "__main__":
     # check whether stay_id is long enough, 7 values
     # lookup whether that stay_id had a cardiac arrest
     # call had_cardiac_arrest here with each datapoint to determine the label
-    data_with_labels = add_labels_to_data(data);
+    labels = get_labels_from_data(data);
+    
+    print(labels);
+    
     
     # format everything into a single numpy array
-    data_array = data_to_numpy_array(data_with_labels);
+    data_array = data_to_numpy_array(data);
     
-    # save the array to a file to ship to neural net
-    save_data_to_file(data_array);
+    
+
     
 
