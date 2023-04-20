@@ -5,9 +5,13 @@ from torch.utils.data import DataLoader
 
 num_epochs = 3 # CHANGE THIS!!!!
 seq_length = 1 # CHANGE THIS!!!!
-data =  # DATA GOES HERE IN THEORY
+inputs = np.load("data/data.npy");
+labels = np.load("data/labels.npy");
+
+data = (input, labels);
+print(data);
 #CHOOSE CHARS OF LSTM
-input_size, hidden_size, len_datapoints, output_size = []
+input_size, hidden_size, len_datapoints, output_size = [data.shape[1], data[0].shape[1]//2, data[0].shape[0], 1];
 
 class LSTM(nn.Module):
     def __init__(self, input_size, hidden_size, len_datapoints, output_size):
