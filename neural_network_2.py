@@ -13,7 +13,7 @@ class CA_LSTM(nn.Module):
         print(input.shape)
         
         # self.lstm = nn.LSTM(input.shape[1], self.hidden_size, self.len_datapoints, batch_first=True)
-        self.lstm = nn.LSTM(  6,32,20,batch_first=True,dtype=torch.float64)
+        self.lstm = nn.LSTM(  6,32,20,batch_first=False,dtype=torch.float64)
         
         self.fc1 = nn.Linear(32, 16, dtype=torch.float64);
         self.fc2 = nn.Linear( 16, 8, dtype=torch.float64);
@@ -25,8 +25,8 @@ class CA_LSTM(nn.Module):
         
      
       
-        h0 = torch.zeros(20,32,32,dtype=torch.double).to(device=x.device)
-        c0 = torch.zeros(20,32,32,dtype=torch.double).to(device=x.device)
+        h0 = torch.zeros(20,20,32,dtype=torch.double).to(device=x.device)
+        c0 = torch.zeros(20,20,32,dtype=torch.double).to(device=x.device)
         
        
         out, _ = self.lstm(x, (h0, c0))
@@ -35,6 +35,7 @@ class CA_LSTM(nn.Module):
         out = self.relu(self.fc2(out))
         out = self.fc3(out)
         return out.squeeze()
+    
     
     
 
@@ -50,8 +51,8 @@ def split_data(inputs, labels, train_ratio = 0.70):
     Y_train = labels[0:train_end];
     Y_test = labels[train_end:];
     
-    train_loader = DataLoader(X_train, batch_size=32, shuffle=True);
-    test_loader = DataLoader(X_test, batch_size=32, shuffle=True);
+    train_loader = DataLoader(X_train, batch_size=1, shuffle=True);
+    test_loader = DataLoader(X_test, batch_size=1, shuffle=True);
     
     return train_loader, test_loader, Y_train, Y_test
 
